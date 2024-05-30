@@ -1,0 +1,32 @@
+version: '3.8'
+
+x-common-variables:
+  &common-vars
+  DATABASE_URL: postgres://postgres:postgres@db/postgres
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    volumes:
+      - .:/app
+    environment:
+      <<: *common-vars
+    command: sh -c "python -m code.app"
+    ports:
+      - '8002:8000'
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    volumes:
+      - .:/app
+    environment:
+      <<: *common-vars
+    command: sh -c "python -m code.scheduler"
+
+networks:
+  default:
+    name: connector_network

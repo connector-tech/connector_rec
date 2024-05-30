@@ -1,0 +1,70 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - web
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      IMAGE: ${{ steps.build-image.outputs.IMAGE }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t connector-rec -f docker/Dockerfile .
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Docker image to Docker Hub
+        id: build-image
+        run: |
+          docker tag connector-rec ${{ secrets.DOCKER_USERNAME }}/$IMAGE
+          docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE
+          echo "IMAGE=$IMAGE" >> $GITHUB_OUTPUT
+        env:
+          IMAGE: connector-rec:${{ github.run_id }}
+
+  deploy:
+    runs-on: self-hosted
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Stop existing container on AWS Lightsail
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          docker stop connector-rec-scheduler || true
+          docker rm connector-rec-scheduler || true
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Deploy App to AWS Lightsail
+        env:
+          IMAGE: ${{ needs.build.outputs.IMAGE }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          # Run the Docker container on AWS Lightsail
+          docker run -d --name=connector-rec-scheduler --network=backend \
+          -e DATABASE_URL=$DATABASE_URL \
+          ${{ secrets.DOCKER_USERNAME }}/$IMAGE \
+          sh -c "aerich upgrade && python -m code.scheduler"

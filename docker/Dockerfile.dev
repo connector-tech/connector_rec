@@ -1,0 +1,13 @@
+FROM python:3.11-slim-buster
+
+RUN useradd --create-home --home-dir /app --shell /bin/bash app
+WORKDIR /app
+
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6 libhdf5-dev libhdf5-serial-dev hdf5-tools zlib1g-dev zip liblapack-dev libblas-dev gfortran -y
+
+COPY requirements ./requirements
+
+RUN pip install --upgrade pip setuptools wheel --no-cache-dir && pip install --no-cache-dir -r requirements/base.txt
+
+COPY . .
+USER app

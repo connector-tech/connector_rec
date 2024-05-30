@@ -1,0 +1,11 @@
+__pycache__/
+diploma_project.egg-info/
+photos/
+weights/
+data/
+liveness_v1.csv
+liveness_v2.csv
+logs/
+.idea
+.keras
+venv

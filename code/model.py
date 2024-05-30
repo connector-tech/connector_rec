@@ -1,15 +1,6 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 import json
-import random
-import re
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.cluster import KMeans
@@ -20,13 +11,8 @@ from keras.layers import Dense, Dropout
 from keras.optimizers import Adam
 from keras.regularizers import l2
 import nltk
-from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-import warnings
 
-warnings.filterwarnings("ignore")
-nltk.download('stopwords')
-nltk.download('punkt')
 
 def preprocess_df(df):
     df_text = df.drop(columns=['id'])
@@ -35,10 +21,12 @@ def preprocess_df(df):
     df_text = df_text.apply(lambda col: col.str.replace(r'\s+', ' ', regex=True))
     df_text = df_text.apply(lambda col: col.apply(nltk.word_tokenize))
     lemmatizer = WordNetLemmatizer()
-    df_text = df_text.apply(lambda col: col.apply(lambda tokens: [lemmatizer.lemmatize(token, pos="v") for token in tokens]))
+    df_text = df_text.apply(
+        lambda col: col.apply(lambda tokens: [lemmatizer.lemmatize(token, pos="v") for token in tokens]))
     df_text = df_text.apply(lambda col: col.apply(' '.join))
     preprocessed_df = pd.concat([df[['id']], df_text], axis=1)
     return preprocessed_df
+
 
 def cluster_users_with_cosine_and_kmeans(data_df, parameter_columns, num_clusters=2):
     parameter_weights = [1.0] * len(parameter_columns)
@@ -69,9 +57,10 @@ def cluster_users_with_cosine_and_kmeans(data_df, parameter_columns, num_cluster
                 similar_users.append((user1_id, user2_id, similarity))
     return similar_users, cosine_sim_matrix, cluster_labels
 
+
 def process_and_train(profile_json, df_act_json, df_sim_json, num_clusters=2):
     profile_data = json.loads(profile_json)
-    
+
     df_list = []
     for i, profile in enumerate(profile_data):
         profile_df = pd.DataFrame(profile, index=[i])
@@ -85,7 +74,7 @@ def process_and_train(profile_json, df_act_json, df_sim_json, num_clusters=2):
         df_act[key] = df_act[key].astype(int)
 
     preprocessed_df = preprocess_df(df)
-    
+
     sim_data = json.loads(df_sim_json)
     df_sim = pd.DataFrame(sim_data)
     for key in ['id', 'id2']:
@@ -93,7 +82,9 @@ def process_and_train(profile_json, df_act_json, df_sim_json, num_clusters=2):
     df_sim['sim'] = df_sim['sim'].astype(float)
 
     parameter_columns = list(preprocessed_df.columns[1:])
-    similar_users, cosine_sim_matrix, cluster_labels = cluster_users_with_cosine_and_kmeans(preprocessed_df, parameter_columns, num_clusters)
+    similar_users, cosine_sim_matrix, cluster_labels = cluster_users_with_cosine_and_kmeans(preprocessed_df,
+                                                                                            parameter_columns,
+                                                                                            num_clusters)
 
     df_act['Target_ID'] = df_act['Target_ID'].astype(int)
     preprocessed_df['id'] = preprocessed_df['id'].astype(int)
@@ -140,7 +131,7 @@ def process_and_train(profile_json, df_act_json, df_sim_json, num_clusters=2):
     model.add(Dense(1, activation='sigmoid'))
 
     model.compile(optimizer=Adam(learning_rate=0.0001), loss='binary_crossentropy', metrics=['accuracy'])
-   
+
     model.fit(X_train, y_train, epochs=100, batch_size=32, validation_split=0.2, verbose=0)
 
     predictions = model.predict(X_test)
@@ -156,7 +147,6 @@ def process_and_train(profile_json, df_act_json, df_sim_json, num_clusters=2):
     return results_json
 
 
-'''
 profile_json = json.dumps([
     {
         "Goals": "Christian gay rasizms you bro somersimte saddnes sun time clock reading sunset",
@@ -193,7 +183,5 @@ df_sim = json.dumps({
     "id2": ["2", "3", "1"],
     "sim": ["0.8", "0.85", "0.75"]
 })
-'''
-results_json = process_and_train(profile_json, df_act, df_sim, num_clusters=1)
 
-
+# results_json = process_and_train(profile_json, df_act, df_sim, num_clusters=1)
