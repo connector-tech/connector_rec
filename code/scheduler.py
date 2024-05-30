@@ -10,6 +10,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from code.db import AsyncpgConnection
 from code.similarity import process_and_cluster
+from loguru import logger
 
 scheduler = AsyncIOScheduler(timezone='UTC')
 
@@ -28,6 +29,7 @@ async def update_user_similarity():
             **json.loads(user_answer['answers']),
         } for user_answer in users_with_answers
     ]
+    logger.info(f'Processing {data_to_process} users')
     similarity_matrix = process_and_cluster(data_to_process)
 
     values = []

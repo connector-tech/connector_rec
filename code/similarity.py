@@ -8,6 +8,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import MaxAbsScaler
+from loguru import logger
 
 
 def process_and_cluster(data: list, num_clusters=3):
@@ -54,8 +55,10 @@ def process_and_cluster(data: list, num_clusters=3):
         return preprocessed_df
 
     preprocessed_df = preprocess_df(df)
+    logger.info(f'Preprocessed DataFrame: {preprocessed_df}')
 
     def cluster_users_with_cosine_and_kmeans(data_df, parameter_columns, num_clusters=3):
+        logger.info(f'{parameter_columns}')
         parameter_weights = [1.0] * len(parameter_columns)
 
         def combine_weighted_features(row, weights):
