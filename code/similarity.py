@@ -84,10 +84,10 @@ def process_and_cluster(data: list, num_clusters=3):
         similar_users = []
         num_users = len(data_df)
         for i in range(num_users):
-            for j in range(i + 1, num_users):
+            for j in range(num_users):
                 similarity = cosine_sim_matrix[i, j]
                 user1_id, user2_id = data_df.loc[i, 'user_id'], data_df.loc[j, 'user_id']
-                if (user1_id, user2_id) not in similar_users and (user2_id, user1_id) not in similar_users:
+                if user1_id != user2_id:
                     similar_users.append((user1_id, user2_id, similarity))
 
         return similar_users, cosine_sim_matrix, cluster_labels
