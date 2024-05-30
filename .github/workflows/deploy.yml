@@ -64,7 +64,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           # Run the Docker container on AWS Lightsail
-          docker run -d --name=connector-rec-scheduler --network=backend \
+          docker run -d --name=connector-rec-scheduler \
           -e DATABASE_URL=$DATABASE_URL \
           ${{ secrets.DOCKER_USERNAME }}/$IMAGE \
-          sh -c "aerich upgrade && python -m code.scheduler"
+          sh -c "python -m code.scheduler"

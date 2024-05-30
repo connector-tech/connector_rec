@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import nltk
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -49,7 +49,7 @@ scheduler.add_job(
     update_user_similarity,
     trigger='interval',
     hours=6,
-    next_run_time=datetime.now(timezone.utc),
+    next_run_time=datetime.now(timezone.utc) + timedelta(minutes=1),
 )
 
 
