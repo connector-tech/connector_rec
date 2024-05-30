@@ -34,9 +34,7 @@ async def update_user_similarity():
 
     values = []
     for s in similarity_matrix:
-        user_1_id = min(s['user_id'], s['user_id_2'])
-        user_2_id = max(s['user_id'], s['user_id_2'])
-        values.append((str(uuid4()), user_1_id, user_2_id, float(s['sim'])))
+        values.append((str(uuid4()), s['user_id'], s['user_id_2'], float(s['sim'])))
 
     insert_user_similarity = """
         INSERT INTO user_similarity (id, user_1_id, user_2_id, similarity)
@@ -50,7 +48,7 @@ async def update_user_similarity():
 scheduler.add_job(
     update_user_similarity,
     trigger='interval',
-    hours=6,
+    hours=1,
     next_run_time=datetime.now(timezone.utc) + timedelta(minutes=1),
 )
 
